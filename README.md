@@ -38,6 +38,19 @@ print(collisions["collision_severity"].value_counts().to_dict())
     101525 collisions in 2025, 42 columns
     {'Slight': 74881, 'Serious': 25191, 'Fatal': 1453}
 
+Prefer the per-table helpers? `get_collisions()`, `get_casualties()` and
+`get_vehicles()` wrap `get_stats19()` with the `type` pre-filled,
+mirroring the `read_*()` family (the same API shape as the R package’s
+new `get_collisions()` etc. from
+[ropensci/stats19#320](https://github.com/ropensci/stats19/pull/320)):
+
+``` python
+collisions2 = stats19.get_collisions(year=2025, silent=True)
+print(f"{collisions2.shape[0]} collisions via get_collisions()")
+```
+
+    101525 collisions via get_collisions()
+
 ## Central Leeds collisions, 2025
 
 Filter collisions to a bounding box around Central Leeds (British
@@ -114,8 +127,9 @@ print(clean_model(examples).tolist())
 | Function | Purpose |
 |----|----|
 | `dl_stats19(year, type)` | Download CSVs to the data directory |
+| `get_collisions(year)` / `get_casualties(year)` / `get_vehicles(year)` | Download + read + format, one table type (wrappers over `get_stats19`) |
 | `read_collisions(year)` / `read_casualties(year)` / `read_vehicles(year)` | Read + format tables |
-| `get_stats19(year, type)` | Download + read + format, R-style |
+| `get_stats19(year, type)` | Download + read + format, R-style (general escape hatch) |
 | `list_files(year, table)` | Discover available files |
 | `format_sf(df)` | Spatial points via DuckDB Spatial |
 | `clean_make()` / `clean_model()` / `clean_make_model()` | Clean vehicle makes/models |

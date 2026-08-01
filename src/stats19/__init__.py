@@ -19,7 +19,6 @@ Public API (mirrors the R package where sensible):
 
 from __future__ import annotations
 
-from stats19 import clean as _clean
 from stats19.api import get_MOT, get_stats19_adjustments, get_ULEZ
 from stats19.clean import (
     clean_make,
@@ -35,9 +34,12 @@ from stats19.core import (
     format_column_names,
     format_stats19,
     format_vehicles,
+    get_casualties,
+    get_collisions,
     get_data_directory,
     get_stats19,
     get_url,
+    get_vehicles,
     list_files,
     locate_files,
     locate_one_file,
@@ -71,10 +73,13 @@ __all__ = [
     "format_vehicles",
     "get_MOT",
     "get_ULEZ",
+    "get_casualties",
+    "get_collisions",
     "get_data_directory",
     "get_stats19",
     "get_stats19_adjustments",
     "get_url",
+    "get_vehicles",
     "list_files",
     "locate_files",
     "locate_one_file",

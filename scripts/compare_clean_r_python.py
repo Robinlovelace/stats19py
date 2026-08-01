@@ -7,6 +7,7 @@ runs both implementations, and reports mismatches.
 from __future__ import annotations
 
 import subprocess
+import tempfile
 
 import pandas as pd
 
@@ -23,8 +24,6 @@ py_make = clean.clean_make(pd.Series(s)).fillna("NA").tolist()
 py_model = clean.clean_model(pd.Series(s)).fillna("NA").tolist()
 
 # pass the values to R via a temp CSV (robust for large vectors)
-import tempfile
-
 with tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False) as f:
     f.write("\n".join(s))
     tmp = f.name
@@ -44,7 +43,9 @@ r_model = r_model.split("\x01")
 r_make = [x.strip() for x in r_make]
 r_model = [x.strip() for x in r_model]
 print(
-    f"lengths: py_make={len(py_make)} r_make={len(r_make)} py_model={len(py_model)} r_model={len(r_model)}"
+    "lengths: "
+    f"py_make={len(py_make)} r_make={len(r_make)} "
+    f"py_model={len(py_model)} r_model={len(r_model)}"
 )
 
 nm = sum(1 for a, b in zip(py_make, r_make) if a != b)

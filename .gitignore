@@ -20,3 +20,4 @@ data/
 # OS / editor
 .DS_Store
 .vscode/*.log
+.jupyter_cache/

@@ -29,6 +29,37 @@ def test_get_stats19_end_to_end(data_dir_2024) -> None:
     assert "collision_severity" in df.columns
 
 
+def test_get_collisions_helper(data_dir_2024) -> None:
+    """get_collisions() mirrors get_stats19(type='collision')."""
+    from stats19 import get_collisions
+
+    df = get_collisions(year=2024, data_dir=str(data_dir_2024), silent=True)
+    ref = get_stats19(year=2024, type="collision", data_dir=str(data_dir_2024), silent=True)
+    assert df is not None and ref is not None
+    assert df.equals(ref)
+    assert df.shape == (100927, 42)
+
+
+def test_get_casualties_helper(data_dir_2024) -> None:
+    from stats19 import get_casualties
+
+    df = get_casualties(year=2024, data_dir=str(data_dir_2024), silent=True)
+    ref = get_stats19(year=2024, type="casualty", data_dir=str(data_dir_2024), silent=True)
+    assert df is not None and ref is not None
+    assert df.equals(ref)
+    assert "casualty_type" in df.columns
+
+
+def test_get_vehicles_helper(data_dir_2024) -> None:
+    from stats19 import get_vehicles
+
+    df = get_vehicles(year=2024, data_dir=str(data_dir_2024), silent=True)
+    ref = get_stats19(year=2024, type="vehicle", data_dir=str(data_dir_2024), silent=True)
+    assert df is not None and ref is not None
+    assert df.equals(ref)
+    assert "vehicle_type" in df.columns
+
+
 def test_get_stats19_accident_alias(data_dir_2024) -> None:
     """R: type 'accident'/'accidents' maps to 'collision'."""
     df = get_stats19(year=2024, type="accidents", data_dir=str(data_dir_2024), silent=True)

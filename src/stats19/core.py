@@ -400,6 +400,90 @@ def get_stats19(
     return read_in
 
 
+def get_collisions(
+    year: int | list[int] | str | None = None,
+    data_dir: str | None = None,
+    file_name: str | None = None,
+    format: bool = True,
+    ask: bool = False,
+    silent: bool = False,
+    output_format: str = "tibble",
+    timeout: int = 600,
+) -> pd.DataFrame | None:
+    """Download, read and format STATS19 collision data (R ``get_collisions()``).
+
+    Thin wrapper around :func:`get_stats19` with ``type="collision"``
+    pre-filled, mirroring :func:`read_collisions` in the read family.
+    """
+    return get_stats19(
+        year=year,
+        type="collision",
+        data_dir=data_dir,
+        file_name=file_name,
+        format=format,
+        ask=ask,
+        silent=silent,
+        output_format=output_format,
+        timeout=timeout,
+    )
+
+
+def get_casualties(
+    year: int | list[int] | str | None = None,
+    data_dir: str | None = None,
+    file_name: str | None = None,
+    format: bool = True,
+    ask: bool = False,
+    silent: bool = False,
+    output_format: str = "tibble",
+    timeout: int = 600,
+) -> pd.DataFrame | None:
+    """Download, read and format STATS19 casualty data (R ``get_casualties()``).
+
+    Thin wrapper around :func:`get_stats19` with ``type="casualty"``
+    pre-filled, mirroring :func:`read_casualties` in the read family.
+    """
+    return get_stats19(
+        year=year,
+        type="casualty",
+        data_dir=data_dir,
+        file_name=file_name,
+        format=format,
+        ask=ask,
+        silent=silent,
+        output_format=output_format,
+        timeout=timeout,
+    )
+
+
+def get_vehicles(
+    year: int | list[int] | str | None = None,
+    data_dir: str | None = None,
+    file_name: str | None = None,
+    format: bool = True,
+    ask: bool = False,
+    silent: bool = False,
+    output_format: str = "tibble",
+    timeout: int = 600,
+) -> pd.DataFrame | None:
+    """Download, read and format STATS19 vehicle data (R ``get_vehicles()``).
+
+    Thin wrapper around :func:`get_stats19` with ``type="vehicle"``
+    pre-filled, mirroring :func:`read_vehicles` in the read family.
+    """
+    return get_stats19(
+        year=year,
+        type="vehicle",
+        data_dir=data_dir,
+        file_name=file_name,
+        format=format,
+        ask=ask,
+        silent=silent,
+        output_format=output_format,
+        timeout=timeout,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Formatting (R: format_column_names, format_stats19)
 # ---------------------------------------------------------------------------
@@ -439,7 +523,7 @@ def format_stats19(x: pd.DataFrame, type: str) -> pd.DataFrame:
     for variable, mapping in lkps.items():
         if variable not in x.columns:
             continue
-        x[variable] = x[variable].astype(str).map(lambda v: mapping.get(v, v))
+        x[variable] = x[variable].astype(str).map(lambda v, m=mapping: m.get(v, v))
         x[variable] = x[variable].where(~x[variable].isin(_MISSING_LABELS))
 
     # Standardize missing labels across ALL remaining string columns

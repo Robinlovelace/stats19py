@@ -69,7 +69,8 @@ def format_sf(
             f"ST_Transform(ST_Point({easting_col}, {northing_col}), '{_CRS_OSGB}', '{_CRS_WGS84}')"
         )
     rel = con.sql(
-        f"SELECT * EXCLUDE ({easting_col}, {northing_col}), {geom_expr} AS geom FROM stats19_spatial"
+        f"SELECT * EXCLUDE ({easting_col}, {northing_col}), "
+        f"{geom_expr} AS geom FROM stats19_spatial"
     )
 
     if return_type == "relation":

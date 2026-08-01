@@ -225,7 +225,10 @@ def clean_model(model: pd.Series) -> pd.Series:
         return rest or None
 
     out = pd.Series(
-        [_extract(str(v), str(m)) if not pd.isna(v) else None for v, m in zip(upper, make_part)],
+        [
+            _extract(str(v), str(m)) if not pd.isna(v) else None
+            for v, m in zip(upper, make_part, strict=False)
+        ],
         index=model.index,
         dtype="object",
     )
