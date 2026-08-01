@@ -39,6 +39,12 @@ from stats19.core import (
     read_vehicles,
     set_data_directory,
 )
+from stats19.spatial import (
+    format_sf,
+    read_geoparquet,
+    st_transform_geometry,
+    write_geoparquet,
+)
 
 __version__ = "0.1.0"
 
@@ -48,6 +54,7 @@ __all__ = [
     "format_casualties",
     "format_collisions",
     "format_column_names",
+    "format_sf",
     "format_stats19",
     "format_vehicles",
     "get_data_directory",
@@ -58,9 +65,12 @@ __all__ = [
     "locate_one_file",
     "read_casualties",
     "read_collisions",
+    "read_geoparquet",
     "read_stats19",
     "read_vehicles",
     "set_data_directory",
+    "st_transform_geometry",
+    "write_geoparquet",
 ]
 
 

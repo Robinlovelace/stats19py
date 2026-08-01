@@ -313,12 +313,91 @@ def get_stats19(
     ask: bool = False,
     silent: bool = False,
     timeout: int = 600,
+    format: bool = True,
+    output_format: str = "tibble",
+    file_name: str | None = None,
 ) -> pd.DataFrame | None:
-    """Download then read (R ``get_stats19()``)."""
+    """Download then read, with R ``get_stats19()`` extras.
+
+    - ``type`` aliases: anything containing 'acc' -> 'collision'.
+    - ``output_format``: 'tibble' (default), 'data.frame', 'sf' or 'ppp'
+      (sf uses DuckDB Spatial ``format_sf``; casualties have no spatial
+      dimension so fall back to tibble, mirroring R).
+    - e-scooter rider unification: casualties linked to e-scooter vehicles
+      (via vehicle data) with missing casualty_type become 'E-scooter rider'.
+    """
     data_dir = data_dir or get_data_directory()
     type_arg = type or "collision"
-    dl_stats19(year=year, type=type_arg, data_dir=data_dir, silent=silent, timeout=timeout)
-    return read_stats19(year=year, data_dir=data_dir, type=type_arg)
+    if "acc" in type_arg.lower():
+        type_arg = "collision"
+
+    valid_formats = ("tibble", "data.frame", "sf", "ppp")
+    if output_format not in valid_formats:
+        import warnings
+
+        warnings.warn(
+            f"output_format should be one of {', '.join(valid_formats)}. Defaulting to tibble.",
+            stacklevel=2,
+        )
+        output_format = "tibble"
+    if "cas" in type_arg.lower() and output_format in ("sf", "ppp"):
+        import warnings
+
+        warnings.warn(
+            "Casualties do not have a spatial dimension. Defaulting to tibble.", stacklevel=2
+        )
+        output_format = "tibble"
+
+    dl_stats19(
+        year=year,
+        type=type_arg,
+        data_dir=data_dir,
+        silent=silent,
+        timeout=timeout,
+        file_name=file_name,
+    )
+    read_in = read_stats19(
+        year=year, filename=file_name or "", data_dir=data_dir, format=format, type=type_arg
+    )
+    if read_in is None:
+        return None
+
+    # E-scooter rider unification (R: reads vehicles, marks riders)
+    if "cas" in type_arg.lower() and format:
+        try:
+            ve = read_stats19(year=year, data_dir=data_dir, format=True, type="vehicle")
+            if ve is not None and "escooter_flag" in ve.columns:
+                escooter = ve.loc[
+                    ve["escooter_flag"] == "Vehicle was an e-scooter",
+                    ["collision_index", "vehicle_reference"],
+                ]
+                key = (
+                    read_in["collision_index"].astype(str)
+                    + "|"
+                    + read_in["vehicle_reference"].astype(str)
+                )
+                ekey = (
+                    escooter["collision_index"].astype(str)
+                    + "|"
+                    + escooter["vehicle_reference"].astype(str)
+                )
+                is_rider = key.isin(set(ekey))
+                mask = is_rider & read_in["casualty_type"].isna()
+                read_in.loc[mask, "casualty_type"] = "E-scooter rider"
+        except Exception:  # noqa: BLE001 - mirror R tryCatch
+            pass
+
+    if output_format != "tibble" and read_in is not None:
+        from stats19.spatial import format_sf
+
+        if output_format == "data.frame":
+            pass  # pandas DataFrame is already the native type
+        elif output_format == "sf":
+            sf_out = format_sf(read_in, return_type="dataframe")
+            read_in = sf_out if isinstance(sf_out, pd.DataFrame) else read_in
+        elif output_format == "ppp":
+            raise NotImplementedError("ppp (spatstat) output is not supported in stats19py")
+    return read_in
 
 
 # ---------------------------------------------------------------------------

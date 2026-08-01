@@ -30,9 +30,9 @@ Each slice is independently usable and reviewable; all use red-green TDD.
 | **2** | Download (`dl_stats19()` equivalent) | 2024/2025 CSVs on disk in data dir; byte-count matches R `dl_stats19()`; offline tests use a local HTTP stub |
 | **3** | Read (`read_collisions()`, `read_casualties()`, `read_vehicles()`) | Column names, dtypes, row counts for 2024/2025 match R output (comparison harness) |
 | **4** | Format (`format_collisions()`, `format_casualties()`, `format_vehicles()`, `format_column_names()`) | Code→label lookups from embedded schema match R `format_*()` on 2024/2025; fuzzy compare |
-| **5** | R↔Python comparison harness | Script runs R and Python on 2024/2025, diffs outputs/dtypes/spot values; report produced; diffs triaged to issues |
-| **6** | `get_stats19()` end-to-end + multi-year + joins | Full pipeline (download→read→format) for 2024+2025; `accident_index` joins match R |
-| **7** | Spatial (`format_sf()` via geopandas), cleaning (`clean_make()` etc.), adjustments, MOT/ULEZ | Checkpoint per sub-feature; parity with R on sample data |
+| **5** | R↔Python comparison harness | Script runs R and Python on 2024/2025, diffs outputs/dtypes/spot values; report produced; diffs triaged to issues | ✅ |
+| **6** | `get_stats19()` end-to-end + multi-year + joins + **DuckDB Spatial** | Full pipeline for 2024+2025; joins match R; `format_sf()`/GeoParquet via DuckDB spatial (not geopandas); e-scooter rider unification | ✅ |
+| **7** | Cleaning (`clean_make()` etc.), adjustments, MOT/ULEZ | Checkpoint per sub-feature; parity with R on sample data | ⬜ |
 
 ## Comparison & issue workflow
 
