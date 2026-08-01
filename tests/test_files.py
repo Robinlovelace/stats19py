@@ -83,9 +83,27 @@ def test_list_files_matches_embedded_manifest() -> None:
     assert all(f.endswith(".csv") for f in all_files)
 
 
-def test_data_directory_roundtrip(tmp_path) -> None:
-    files.set_data_directory(str(tmp_path))
-    assert files.get_data_directory() == str(tmp_path)
+def test_data_directory_roundtrip(tmp_path, monkeypatch) -> None:
+    import os
+
+    old = os.environ.get("STATS19_DOWNLOAD_DIRECTORY")
+    try:
+        files.set_data_directory(str(tmp_path))
+        assert files.get_data_directory() == str(tmp_path)
+        assert os.environ["STATS19_DOWNLOAD_DIRECTORY"] == str(tmp_path)
+    finally:
+        if old is None:
+            os.environ.pop("STATS19_DOWNLOAD_DIRECTORY", None)
+        else:
+            os.environ["STATS19_DOWNLOAD_DIRECTORY"] = old
+
+
+def test_get_data_directory_default(monkeypatch) -> None:
+    """Without the env var, defaults to ./data under cwd."""
+    import os
+
+    monkeypatch.delenv("STATS19_DOWNLOAD_DIRECTORY", raising=False)
+    assert files.get_data_directory() == os.path.join(os.getcwd(), "data")
 
 
 def test_embedded_data_files_present() -> None:
