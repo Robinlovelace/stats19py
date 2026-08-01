@@ -54,3 +54,8 @@ addopts = "-q"
 [tool.pyright]
 include = ["src", "tests", "scripts/compare_r_python.py"]
 typeCheckingMode = "standard"
+
+[dependency-groups]
+dev = [
+    "openpyxl>=3.1.5",
+]

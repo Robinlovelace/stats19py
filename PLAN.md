@@ -43,6 +43,25 @@ Each slice is independently usable and reviewable; all use red-green TDD.
   - R bug → open issue in `ropensci/stats19` (e.g. the 2025 provisional filename bug, found 2026-08-01)
   - Data/spec ambiguity → document + issue in the repo that owns the behaviour
 
+## Schema & provenance (golden file)
+
+`schema.csv` (repo root, visible) + `src/stats19/data/stats19_schema.csv` (runtime copy)
+is the **golden schema**: 1820 rows of `table/variable/code/label/note/type`.
+
+- **Source of truth:** `ropensci/stats19` v4.1.0-dev package data (`stats19_schema.rda`,
+  `stats19_variables.rda`). Chosen for behavioural parity: the schema carries R quirks
+  that must be preserved (e.g. literal `"None"` labels for code 0 in 6 variables).
+- **Open-access alternative (cross-validation):** DfT publishes the official
+  `dft-road-casualty-statistics-road-safety-open-dataset-data-guide-2025.xlsx`,
+  sheet `2024_code_list` (1821 rows) — the authoritative public code list. It
+  overlaps the golden schema by ~1776/1818 keys. See `scripts/compare_dft_schema.py`.
+  Divergences found: DfT has empty label where R has `"None"` (code 0, 6 vars);
+  DfT labels carry trailing whitespace. → issue candidates for ropensci/stats19.
+- **Regenerate:** `uv run python scripts/build_schema.py --write` (re-exports from the
+  R dev checkout, writes provenance JSON, refreshes the root copy).
+- **Provenance:** `src/stats19/data/schema_provenance.json` records source, date,
+  and cross-validation results.
+
 ## Development
 
 ```bash
