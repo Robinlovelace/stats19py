@@ -1,6 +1,7 @@
 ---
 title: stats19py
 format: gfm
+output-file: README.md
 jupyter: python3
 execute:
   echo: true
