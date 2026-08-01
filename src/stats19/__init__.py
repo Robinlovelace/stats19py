@@ -7,6 +7,7 @@ published by the Department for Transport.
 
 from __future__ import annotations
 
+from stats19.download import dl_stats19, ensure_downloaded
 from stats19.files import (
     file_names,
     find_file_name,
@@ -21,6 +22,8 @@ from stats19.files import (
 __version__ = "0.1.0"
 
 __all__ = [
+    "dl_stats19",
+    "ensure_downloaded",
     "file_names",
     "find_file_name",
     "get_data_directory",
