@@ -50,3 +50,7 @@ indent-style = "space"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.pyright]
+include = ["src", "tests", "scripts/compare_r_python.py"]
+typeCheckingMode = "standard"

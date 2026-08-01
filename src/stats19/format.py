@@ -69,7 +69,7 @@ def _apply_lookups(x: pd.DataFrame, table: str) -> pd.DataFrame:
         mapping = dict(zip(lookup["code"].astype(str), lookup["label"]))
         # only replace values present in the lookup; keep others as-is
         x[v] = x[v].astype(str).map(lambda val: mapping.get(val, val))
-        x[v] = x[v].where(~x[v].isin(_MISSING_LABELS))
+        x[v] = x[v].where(~x[v].isin(list(_MISSING_LABELS)))
     return x
 
 
@@ -96,7 +96,7 @@ def format_stats19(x: pd.DataFrame, type: str) -> pd.DataFrame:
     # Standardize missing labels across ALL string columns
     for col in x.columns:
         if pd.api.types.is_object_dtype(x[col]):
-            x[col] = x[col].where(~x[col].isin(_MISSING_LABELS))
+            x[col] = x[col].where(~x[col].isin(list(_MISSING_LABELS)))
 
     # E-scooter unification
     if "escooter_flag" in x.columns and "vehicle_type" in x.columns:

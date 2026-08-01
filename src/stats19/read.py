@@ -10,8 +10,6 @@ code-to-label lookups — see ``format.py``.
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import Callable
 
 import pandas as pd
 
@@ -23,11 +21,16 @@ _NUMERIC = "numeric"
 
 
 def _load_schema() -> pd.DataFrame:
-    """Load the embedded STATS19 schema (table/variable/code/label/note/type)."""
+    """Load the embedded STATS19 schema (table/variable/code/label/note/type).
+
+    ``keep_default_na=False`` is critical: the R schema contains the literal
+    string ``"None"`` as a label (6 variables, code 0) and pandas would
+    otherwise silently convert it to NaN, breaking code->label parity.
+    """
     import importlib.resources as res
 
     with res.files("stats19").joinpath("data", "stats19_schema.csv").open() as f:
-        return pd.read_csv(f)
+        return pd.read_csv(f, keep_default_na=False).replace("", pd.NA)
 
 
 _SCHEMA: pd.DataFrame | None = None
@@ -48,14 +51,21 @@ def _read_csv(path: str) -> pd.DataFrame:
     (``na = c("", "NA", "-1")``); column types come from the schema where
     known, otherwise pandas type inference (readr ``col_guess()``).
     """
-    df = pd.read_csv(path, na_values=["", "NA", "-1"], low_memory=False)
-    # Enforce schema-declared numeric/integer types (readr col_spec does this
-    # via stats19_variables; we use the same type info from the schema)
+    # Build per-column dtypes from the schema so character columns are read
+    # as strings (keeping code values like "1", "-1" intact for lookups) and
+    # numeric columns are read numerically.
     s = schema()
+    char_vars = set(s.loc[s["type"] == "character", "variable"])
     num_vars = set(s.loc[s["type"].isin(["numeric", "integer"]), "variable"])
-    for col in df.columns:
-        if col in num_vars and not pd.api.types.is_numeric_dtype(df[col]):
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    header = pd.read_csv(path, nrows=0).columns.tolist()
+    dtype_map: dict[str, object] = {}
+    for col in header:
+        if col in char_vars:
+            dtype_map[col] = str
+        elif col in num_vars:
+            dtype_map[col] = float
+    df = pd.read_csv(path, na_values=["", "NA", "-1"], dtype=dtype_map, low_memory=False)  # type: ignore[call-overload]
     return df
 
 
@@ -138,7 +148,9 @@ def read_stats19(
         years = [year] if isinstance(year, int) else list(year)
         year_col = next((c for c in df.columns if c in ("accident_year", "collision_year")), None)
         if year_col is not None:
-            df = df[df[year_col].isin(years)]
+            filtered = df[df[year_col].isin(years)]
+            assert isinstance(filtered, pd.DataFrame)
+            return filtered
     return df
 
 

@@ -88,7 +88,7 @@ def test_read_uses_data_dir(tmp_path: Path, monkeypatch) -> None:
         "collision_index,collision_year\n2024X001,2024\n", encoding="utf-8"
     )
     df = read.read_collisions(year=2024, format=False, data_dir=str(tmp_path))
-    assert len(df) == 1
+    assert df is not None and len(df) == 1
 
 
 def test_embedded_schema_loads() -> None:
