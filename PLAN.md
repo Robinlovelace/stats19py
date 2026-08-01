@@ -32,7 +32,7 @@ Each slice is independently usable and reviewable; all use red-green TDD.
 | **4** | Format (`format_collisions()`, `format_casualties()`, `format_vehicles()`, `format_column_names()`) | Code→label lookups from embedded schema match R `format_*()` on 2024/2025; fuzzy compare |
 | **5** | R↔Python comparison harness | Script runs R and Python on 2024/2025, diffs outputs/dtypes/spot values; report produced; diffs triaged to issues | ✅ |
 | **6** | `get_stats19()` end-to-end + multi-year + joins + **DuckDB Spatial** | Full pipeline for 2024+2025; joins match R; `format_sf()`/GeoParquet via DuckDB spatial (not geopandas); e-scooter rider unification | ✅ |
-| **7** | Cleaning (`clean_make()` etc.), adjustments, MOT/ULEZ | Checkpoint per sub-feature; parity with R on sample data | ⬜ |
+| **7** | Cleaning (`clean_make()`, `clean_model()`, `clean_make_model()`), adjustments, MOT/ULEZ | Parity with R on 2024 sample data (0/2000 mismatches); env-var data dir; MOT/ULEZ API wrappers with graceful degradation | ✅ |
 
 ## Comparison & issue workflow
 

@@ -19,6 +19,14 @@ Public API (mirrors the R package where sensible):
 
 from __future__ import annotations
 
+from stats19 import clean as _clean
+from stats19.api import get_MOT, get_stats19_adjustments, get_ULEZ
+from stats19.clean import (
+    clean_make,
+    clean_make_model,
+    clean_model,
+    extract_make_stats19,
+)
 from stats19.core import (
     dl_stats19,
     find_file_name,
@@ -49,7 +57,11 @@ from stats19.spatial import (
 __version__ = "0.1.0"
 
 __all__ = [
+    "clean_make",
+    "clean_make_model",
+    "clean_model",
     "dl_stats19",
+    "extract_make_stats19",
     "find_file_name",
     "format_casualties",
     "format_collisions",
@@ -57,8 +69,11 @@ __all__ = [
     "format_sf",
     "format_stats19",
     "format_vehicles",
+    "get_MOT",
+    "get_ULEZ",
     "get_data_directory",
     "get_stats19",
+    "get_stats19_adjustments",
     "get_url",
     "list_files",
     "locate_files",
