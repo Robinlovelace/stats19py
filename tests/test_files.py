@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from stats19 import files
+import stats19 as files
 
 
 @pytest.mark.parametrize(
@@ -110,6 +110,5 @@ def test_embedded_data_files_present() -> None:
     """The package must ship the schema and filename data."""
     import importlib.resources as res
 
-    with res.as_file(res.files("stats19").joinpath("data")):
-        pass  # package data dir accessible
-    assert len(files.file_names()) == 26
+    assert res.files("stats19").joinpath("data", "file_names.txt").is_file()
+    assert len(files.find_file_name()) == 26

@@ -22,6 +22,7 @@ s = s.copy()
 for c in ["code", "label"]:
     s[c] = s[c].fillna("").astype(str).str.strip()
 
+
 # Build keyed maps
 def keyed(df: pd.DataFrame) -> dict:
     m = {}

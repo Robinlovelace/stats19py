@@ -33,8 +33,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
-import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -60,19 +59,15 @@ def export_from_r() -> tuple[int, int]:
     """Re-export schema + variables from the R dev package."""
     if not (STATS19_DEV / "DESCRIPTION").exists():
         raise FileNotFoundError(f"R stats19 dev checkout not found at {STATS19_DEV}")
-    r_script = _EXPORT_R.format(
-        dev=STATS19_DEV, schema=SCHEMA_PATH, variables=VARIABLES_PATH
-    )
-    out = subprocess.run(
-        ["Rscript", "-e", r_script], capture_output=True, text=True, check=True
-    )
+    r_script = _EXPORT_R.format(dev=STATS19_DEV, schema=SCHEMA_PATH, variables=VARIABLES_PATH)
+    out = subprocess.run(["Rscript", "-e", r_script], capture_output=True, text=True, check=True)
     print(out.stdout.strip())
     return 0, 0
 
 
 def write_provenance(n_rows: int) -> None:
     prov = {
-        "generated": datetime.now(timezone.utc).isoformat(),
+        "generated": datetime.now(UTC).isoformat(),
         "source": {
             "r_package": "ropensci/stats19",
             "r_version": "v4.1.0-dev (master after PR #316)",

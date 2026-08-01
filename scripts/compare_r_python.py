@@ -17,7 +17,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from stats19 import read
+from stats19 import (
+    read_casualties,
+    read_collisions,
+    read_vehicles,
+)
 
 REPO = Path(__file__).resolve().parents[1]
 REF_DIR = REPO / "scripts" / "reference"
@@ -37,9 +41,9 @@ def load_reference(table: str, year: int) -> pd.DataFrame:
 def compare(table: str, year: int) -> dict:
     ref = load_reference(table, year)
     readers = {
-        "collision": read.read_collisions,
-        "casualty": read.read_casualties,
-        "vehicle": read.read_vehicles,
+        "collision": read_collisions,
+        "casualty": read_casualties,
+        "vehicle": read_vehicles,
     }
     py = readers[table](year=year)  # formatted (format=True)
     if py is None:

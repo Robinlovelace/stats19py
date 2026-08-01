@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from stats19 import read
+import stats19 as read
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 REF_DIR = Path(__file__).resolve().parents[1] / "scripts" / "reference"

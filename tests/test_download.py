@@ -11,7 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from stats19 import download, files
+import stats19 as files
+from stats19 import core as download  # module where get_url is resolved
+from stats19 import dl_stats19
 
 
 class StubHandler(BaseHTTPRequestHandler):
@@ -43,7 +45,7 @@ def stub_server():
 
 def test_dl_stats19_downloads_file(stub_server: str, tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(download, "get_url", lambda f: f"{stub_server}/{f}")
-    result = download.dl_stats19(
+    result = dl_stats19(
         year=2024,
         data_dir=str(tmp_path),
         silent=True,
@@ -59,7 +61,7 @@ def test_dl_stats19_skips_existing(stub_server: str, tmp_path: Path, monkeypatch
     monkeypatch.setattr(download, "get_url", lambda f: f"{stub_server}/{f}")
     target = tmp_path / "dft-road-casualty-statistics-collision-2024.csv"
     target.write_text("already there")
-    download.dl_stats19(year=2024, data_dir=str(tmp_path), silent=False, timeout=30)
+    dl_stats19(year=2024, data_dir=str(tmp_path), silent=False, timeout=30)
     captured = capsys.readouterr()
     assert "already exists" in captured.out
     assert target.read_text() == "already there"
@@ -68,13 +70,13 @@ def test_dl_stats19_skips_existing(stub_server: str, tmp_path: Path, monkeypatch
 def test_dl_stats19_creates_data_dir(stub_server: str, tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(download, "get_url", lambda f: f"{stub_server}/{f}")
     target_dir = tmp_path / "nested" / "data"
-    download.dl_stats19(year=2024, data_dir=str(target_dir), silent=True, timeout=30)
+    dl_stats19(year=2024, data_dir=str(target_dir), silent=True, timeout=30)
     assert (target_dir / "dft-road-casualty-statistics-collision-2024.csv").exists()
 
 
 def test_dl_stats19_multiple_files(stub_server: str, tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(download, "get_url", lambda f: f"{stub_server}/{f}")
-    download.dl_stats19(year=2024, type="all", data_dir=str(tmp_path), silent=True, timeout=30)
+    dl_stats19(year=2024, type="all", data_dir=str(tmp_path), silent=True, timeout=30)
     names = files.find_file_name(2024)
     for n in names:
         assert (tmp_path / n).exists()
