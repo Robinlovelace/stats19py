@@ -1,0 +1,22 @@
+# .gitignore for stats19py
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+.mypy_cache/
+.pyright/
+.pytest_cache/
+.ruff_cache/
+
+# Data (downloaded STATS19 CSVs, DuckDB files) - keep out of git
+data/
+*.duckdb
+*.duckdb.wal
+
+# OS / editor
+.DS_Store
+.vscode/*.log

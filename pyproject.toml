@@ -1,0 +1,52 @@
+[project]
+name = "stats19"
+version = "0.1.0"
+description = "Python port of the stats19 R package: download and format UK STATS19 road casualty data (collisions, casualties, vehicles) from the DfT"
+readme = "README.md"
+authors = [
+    { name = "Robin Lovelace", email = "rob00x@gmail.com" }
+]
+license = { text = "GPL-3.0-or-later" }
+requires-python = ">=3.11"
+keywords = ["transport", "road-safety", "stats19", "uk", "data"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "duckdb>=1.0",
+    "pandas>=3.0.5",
+]
+
+[project.optional-dependencies]
+geo = ["geopandas>=1.0"]
+dev = ["pytest>=9", "ruff>=0.16", "pyright>=1.1"]
+
+[project.scripts]
+stats19 = "stats19:main"
+
+[build-system]
+requires = ["uv_build>=0.11.28,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "TID"]
+ignore = ["SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
