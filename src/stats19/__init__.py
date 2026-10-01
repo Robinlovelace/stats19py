@@ -49,6 +49,8 @@ from stats19.core import (
     read_vehicles,
     set_data_directory,
 )
+from stats19.layer import casualty_layer
+from stats19.local import OfflineError, manifest_mismatches
 from stats19.spatial import (
     format_sf,
     read_geoparquet,
@@ -59,6 +61,9 @@ from stats19.spatial import (
 __version__ = "0.1.0"
 
 __all__ = [
+    "OfflineError",
+    "casualty_layer",
+    "manifest_mismatches",
     "clean_make",
     "clean_make_model",
     "clean_model",
@@ -94,6 +99,58 @@ __all__ = [
 ]
 
 
-def main() -> None:
-    """CLI entry point (placeholder)."""
-    print(f"stats19 v{__version__}: Python port of the R stats19 package")
+def _parse_years(text: str) -> list[int]:
+    years: list[int] = []
+    for part in text.split(","):
+        a, _, b = part.partition("-")
+        years.extend(range(int(a), int(b or a) + 1))
+    return years
+
+
+def main(argv: list[str] | None = None) -> None:
+    """Command line interface. Run ``stats19 --help``."""
+    import argparse
+
+    ap = argparse.ArgumentParser(prog="stats19", description=f"stats19 v{__version__}")
+    sub = ap.add_subparsers(dest="command")
+    cl = sub.add_parser(
+        "casualties",
+        help="Write collisions and casualties for an area to Parquet, from local files only",
+    )
+    cl.add_argument("--years", required=True, help="e.g. 2024 or 2019-2024 or 2015,2019-2021")
+    cl.add_argument("--out", required=True, help="output directory")
+    cl.add_argument("--authority", action="append", help="ONS code, repeatable")
+    cl.add_argument("--bbox", help="xmin,ymin,xmax,ymax")
+    cl.add_argument("--bbox-crs", default="EPSG:4326", choices=["EPSG:4326", "EPSG:27700"])
+    cl.add_argument("--data-dir", help="default: STATS19_DOWNLOAD_DIRECTORY, then ./data")
+    chk = sub.add_parser("check", help="Compare a data directory with the embedded manifest")
+    chk.add_argument("--data-dir", help="default: STATS19_DOWNLOAD_DIRECTORY, then ./data")
+    args = ap.parse_args(argv)
+
+    if args.command == "casualties":
+        summary = casualty_layer(
+            _parse_years(args.years),
+            args.out,
+            authorities=args.authority,
+            bbox=[float(v) for v in args.bbox.split(",")] if args.bbox else None,
+            bbox_crs=args.bbox_crs,
+            data_dir=args.data_dir,
+        )
+        for row in summary["rows_by_year"]:
+            print(
+                f"{row['year']}: {row['collisions']} collisions, "
+                f"{row['casualties']} casualties, {row['ksi']} KSI"
+            )
+        for note in summary["notes"]:
+            print(note)
+        if summary["years_with_no_rows"]:
+            print(f"No rows for years: {summary['years_with_no_rows']}")
+        print(f"Wrote {args.out}")
+    elif args.command == "check":
+        mm = manifest_mismatches(args.data_dir or get_data_directory())
+        for key, names in mm.items():
+            print(f"{key} ({len(names)}):")
+            for n in names:
+                print(f"  {n}")
+    else:
+        ap.print_help()
