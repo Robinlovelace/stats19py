@@ -33,6 +33,32 @@ Each slice is independently usable and reviewable; all use red-green TDD.
 | **5** | R↔Python comparison harness | Script runs R and Python on 2024/2025, diffs outputs/dtypes/spot values; report produced; diffs triaged to issues | ✅ |
 | **6** | `get_stats19()` end-to-end + multi-year + joins + **DuckDB Spatial** | Full pipeline for 2024+2025; joins match R; `format_sf()`/GeoParquet via DuckDB spatial (not geopandas); e-scooter rider unification | ✅ |
 | **7** | Cleaning (`clean_make()`, `clean_model()`, `clean_make_model()`), adjustments, MOT/ULEZ | Parity with R on 2024 sample data (0/2000 mismatches); env-var data dir; MOT/ULEZ API wrappers with graceful degradation | ✅ |
+| **8** | Pre-downloaded data and casualty layer (`stats19.local`, `casualty_layer()`, `stats19` CLI) | Works offline on a lake with mixed DfT naming vintages; `STATS19_OFFLINE` raises instead of downloading; 1979 files filtered by year in DuckDB; casualty layer counts checked independently against raw CSVs | see audit |
+
+### Audit of the markers above (2026-10-01)
+
+Checked from a fresh clone of `fix/embedded-data-offline`, offline
+(`unshare -rn`), with `STATS19_DOWNLOAD_DIRECTORY=/mnt/secondary/data/stats19`.
+
+- **Slices 1 to 4.** Not reproducible at `e71a229`: the bare `data/` rule in
+  `.gitignore` excluded `src/stats19/data/`, so a fresh clone gave 12 test
+  failures. Fixed on this branch. "URLs hit 200" was not rechecked (offline).
+- **Slice 5.** The harness runs, but writes no report file. For collision
+  2024 it now gives 31 mismatches in 500 sampled rows, all `junction_detail`
+  code 19. The R fixtures in `scripts/reference/` were captured before R
+  stats19 4.2.0 labelled code 19 "Other junction". Regenerating them with
+  `scripts/reference_from_r.R` would add about 360 MB of CSV to git history,
+  so it has not been done.
+- **Slice 6.** No test or script compares joins with R. The DuckDB spatial
+  tests pass offline only because the extension is already cached in
+  `~/.duckdb/extensions/`. `INSTALL spatial` needs network on a new machine.
+- **Slice 7.** "0/2000 mismatches" has no saved output, and
+  `scripts/compare_clean_r_python.py` needs a repo-root `data/` directory.
+  Not reproduced. The MOT and ULEZ graceful-degradation tests pass.
+- **Slice 8.** 78 tests pass with the lake, and 54 pass with 24 skipped
+  without it. See `notes/2026-10-offline-and-casualty-layer.md`.
+- `scripts/debug_*.py`, `diag_*.py`, `diagnose_mismatches.py` and
+  `trace_r*.R` are not referenced from anywhere.
 
 ## Comparison & issue workflow
 
