@@ -122,6 +122,64 @@ print(clean_model(examples).tolist())
     ['Ford', 'Land Rover', 'Volkswagen']
     ['Fiesta', 'Discovery', 'Golf']
 
+## Pre-downloaded data and offline use
+
+Point the package at a directory of DfT CSVs you already have:
+
+```bash
+export STATS19_DOWNLOAD_DIRECTORY=/mnt/secondary/data/stats19
+export STATS19_OFFLINE=1   # never download, fail with OfflineError instead
+```
+
+Files are matched under every DfT naming vintage, not just the names in
+the embedded manifest. `accident-2019.csv` counts as collision data for
+2019, and `casualty-1979-2021.csv` covers casualties up to 2021. A
+download only happens when no local file covers the request, and never
+when `STATS19_OFFLINE` is set. When a request is answered by a 1979
+history file, DuckDB filters it by year before pandas parses it, so one
+year is read without loading the whole history.
+
+`stats19 check` lists files on disk that the manifest does not know, and
+manifest files that are not on disk.
+
+## Casualty layer for an area
+
+`casualty_layer()` writes collisions and casualties for an area and years
+to Parquet, from local files only, entirely in DuckDB:
+
+```bash
+stats19 casualties --years 2019-2024 --authority E08000035 --out out/leeds
+stats19 casualties --years 2024 --bbox 425000,428000,435000,438000 \
+  --bbox-crs EPSG:27700 --out out/leeds-centre
+```
+
+```python
+import stats19
+
+summary = stats19.casualty_layer(
+    range(2019, 2025), "out/leeds", authorities=["E08000035"]
+)
+```
+
+It writes three files:
+
+- `collisions.parquet`: one row per collision, with longitude and
+  latitude, easting and northing, date, authority codes, road context,
+  severity, casualty counts by severity and by mode, and `ksi_adjusted`.
+- `casualties.parquet`: one row per casualty, with mode, severity,
+  `adjusted_serious`, age, sex and the collision location.
+- `casualty_layer.json`: input files, filters and row counts by year.
+
+Modes are pedestrian, cyclist, e-scooter, motorcycle, car, bus, goods
+and other. `ksi_adjusted` is fatal casualties plus the DfT probability
+that each other casualty would have been recorded as serious under
+injury-based (CRASH) reporting. Use it for trends and for comparing
+authorities. It is published from 2004.
+
+Authorities are ONS codes. A collision is kept if
+`local_authority_highway_current` (recoded by DfT to current boundaries)
+or `local_authority_ons_district` (as at the collision date) matches.
+
 ## API overview
 
 | Function | Purpose |
@@ -131,6 +189,8 @@ print(clean_model(examples).tolist())
 | `read_collisions(year)` / `read_casualties(year)` / `read_vehicles(year)` | Read + format tables |
 | `get_stats19(year, type)` | Download + read + format, R-style (general escape hatch) |
 | `list_files(year, table)` | Discover available files |
+| `casualty_layer(years, out_dir, ...)` | Collisions and casualties for an area, to Parquet, local files only |
+| `manifest_mismatches(data_dir)` | Compare a data directory with the embedded manifest |
 | `format_sf(df)` | Spatial points via DuckDB Spatial |
 | `clean_make()` / `clean_model()` / `clean_make_model()` | Clean vehicle makes/models |
 | `get_MOT(vrm)` / `get_ULEZ(vrm)` | DVSA MOT / TfL ULEZ API lookups |
@@ -140,6 +200,7 @@ print(clean_model(examples).tolist())
 | Variable | Purpose |
 |----|----|
 | `STATS19_DOWNLOAD_DIRECTORY` | Where STATS19 CSVs are stored/read (default `./data`) |
+| `STATS19_OFFLINE` | Set to `1` to forbid downloads (`OfflineError` instead) |
 | `MOTKEY` | DVSA MOT History API key for `get_MOT()` |
 
 ## Reproducibility & provenance
