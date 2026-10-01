@@ -96,5 +96,7 @@ def test_embedded_schema_loads() -> None:
     path = res.files("stats19").joinpath("data", "stats19_schema.csv")
     with path.open() as f:
         df = pd.read_csv(f)
-    assert len(df) == 1820
+    # 1821 rows from R stats19 4.2.0. The 2025 DfT data guide added
+    # junction_detail code 19 (Other junction) to the earlier 1820.
+    assert len(df) == 1821
     assert {"table", "variable", "code", "label"}.issubset(df.columns)

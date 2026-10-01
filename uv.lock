@@ -2655,6 +2655,9 @@ dev = [
     { name = "matplotlib" },
     { name = "nbformat" },
     { name = "openpyxl" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -2675,6 +2678,9 @@ dev = [
     { name = "matplotlib", specifier = ">=3.11.1" },
     { name = "nbformat", specifier = ">=5.10.4" },
     { name = "openpyxl", specifier = ">=3.1.5" },
+    { name = "pyright", specifier = ">=1.1" },
+    { name = "pytest", specifier = ">=9" },
+    { name = "ruff", specifier = ">=0.16" },
 ]
 
 [[package]]

@@ -12,8 +12,9 @@ dist/
 .pytest_cache/
 .ruff_cache/
 
-# Data (downloaded STATS19 CSVs, DuckDB files) - keep out of git
-data/
+# Data (downloaded STATS19 CSVs, DuckDB files) - keep out of git.
+# Root-anchored so the package data in src/stats19/data/ is tracked.
+/data/
 *.duckdb
 *.duckdb.wal
 

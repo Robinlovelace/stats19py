@@ -46,7 +46,7 @@ Each slice is independently usable and reviewable; all use red-green TDD.
 ## Schema & provenance (golden file)
 
 `schema.csv` (repo root, visible) + `src/stats19/data/stats19_schema.csv` (runtime copy)
-is the **golden schema**: 1820 rows of `table/variable/code/label/note/type`.
+is the **golden schema**: 1821 rows of `table/variable/code/label/note/type`.
 
 - **Source of truth:** `ropensci/stats19` v4.1.0-dev package data (`stats19_schema.rda`,
   `stats19_variables.rda`). Chosen for behavioural parity: the schema carries R quirks

@@ -5,8 +5,8 @@ The golden schema (code->label lookups + per-variable types) is the heart of
 the package. Sources, in priority order:
 
 1. **ropensci/stats19 R package data** (authoritative for behaviour parity):
-   `data/stats19_schema.rda` + `data/stats19_variables.rda` from the dev
-   checkout (v4.1.0-dev). This is the source of truth because the whole point
+   `stats19_schema`, `stats19_variables` and `file_names` from the installed
+   package (4.2.0 at the time of writing), or from the dev checkout with --dev. This is the source of truth because the whole point
    of the Python port is byte-for-byte parity with R; the schema carries R's
    quirks (e.g. literal "None" labels for code 0 in 6 variables) that must be
    preserved.
@@ -20,6 +20,7 @@ the package. Sources, in priority order:
 Outputs:
 - src/stats19/data/stats19_schema.csv   (package data, consumed at runtime)
 - src/stats19/data/stats19_variables.csv
+- src/stats19/data/file_names.txt         (filename manifest, 26 names)
 - src/stats19/data/schema_provenance.json
 - schema.csv                            (visible golden copy at repo root)
 
@@ -44,35 +45,52 @@ PROV_PATH = PKG_DATA / "schema_provenance.json"
 GOLDEN_PATH = REPO / "schema.csv"
 
 STATS19_DEV = Path.home() / "github" / "ropensci" / "stats19"
+FILE_NAMES_PATH = PKG_DATA / "file_names.txt"
 
+# Default source: the installed R package (lazy data). Pass --dev to export from
+# a source checkout instead. Both gave identical output for stats19 4.2.0.
 _EXPORT_R = """
-suppressMessages(pkgload::load_all("{dev}", quiet = TRUE))
-load(file.path("{dev}", "data", "stats19_schema.rda"))
-load(file.path("{dev}", "data", "stats19_variables.rda"))
+{load}
 write.csv(stats19_schema, "{schema}", row.names = FALSE, na = "")
 write.csv(stats19_variables, "{variables}", row.names = FALSE, na = "")
-cat("exported", nrow(stats19_schema), "schema rows,", nrow(stats19_variables), "variable rows\\n")
+writeLines(unname(unlist(file_names)), "{file_names}")
+cat("stats19", as.character(packageVersion("stats19", lib.loc = .libPaths())),
+    "exported", nrow(stats19_schema), "schema rows,", nrow(stats19_variables),
+    "variable rows,", length(file_names), "file names\\n")
+"""
+_LOAD_INSTALLED = (
+    'data("stats19_schema", "stats19_variables", "file_names", package = "stats19")'
+)
+_LOAD_DEV = """
+for (f in c("stats19_schema", "stats19_variables", "file_names")) {{
+  load(file.path("{dev}", "data", paste0(f, ".rda")))
+}}
 """
 
 
-def export_from_r() -> tuple[int, int]:
-    """Re-export schema + variables from the R dev package."""
-    if not (STATS19_DEV / "DESCRIPTION").exists():
-        raise FileNotFoundError(f"R stats19 dev checkout not found at {STATS19_DEV}")
-    r_script = _EXPORT_R.format(dev=STATS19_DEV, schema=SCHEMA_PATH, variables=VARIABLES_PATH)
+def export_from_r(dev: bool = False) -> None:
+    """Export schema, variables and the filename manifest from R."""
+    PKG_DATA.mkdir(parents=True, exist_ok=True)
+    if dev:
+        if not (STATS19_DEV / "DESCRIPTION").exists():
+            raise FileNotFoundError(f"R stats19 dev checkout not found at {STATS19_DEV}")
+        load = _LOAD_DEV.format(dev=STATS19_DEV)
+    else:
+        load = _LOAD_INSTALLED
+    r_script = _EXPORT_R.format(
+        load=load, schema=SCHEMA_PATH, variables=VARIABLES_PATH, file_names=FILE_NAMES_PATH
+    )
     out = subprocess.run(["Rscript", "-e", r_script], capture_output=True, text=True, check=True)
     print(out.stdout.strip())
-    return 0, 0
 
 
-def write_provenance(n_rows: int) -> None:
+def write_provenance(n_rows: int, r_version: str) -> None:
     prov = {
         "generated": datetime.now(UTC).isoformat(),
         "source": {
             "r_package": "ropensci/stats19",
-            "r_version": "v4.1.0-dev (master after PR #316)",
-            "path": str(STATS19_DEV / "data"),
-            "files": ["stats19_schema.rda", "stats19_variables.rda"],
+            "r_version": r_version,
+            "files": ["stats19_schema", "stats19_variables", "file_names"],
         },
         "cross_validation": {
             "dft_guide": (
@@ -100,14 +118,19 @@ def write_provenance(n_rows: int) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true", help="Re-export from R and rewrite")
+    ap.add_argument("--dev", action="store_true", help="Export from the dev checkout")
     args = ap.parse_args()
 
     if args.write:
-        export_from_r()
+        export_from_r(dev=args.dev)
         import pandas as pd  # noqa: PLC0415
 
         n = len(pd.read_csv(SCHEMA_PATH))
-        write_provenance(n)
+        ver = subprocess.run(
+            ["Rscript", "-e", 'cat(as.character(packageVersion("stats19")))'],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        write_provenance(n, f"{ver} ({'dev checkout' if args.dev else 'installed'})")
         # refresh visible golden copy at repo root
         import shutil  # noqa: PLC0415
 

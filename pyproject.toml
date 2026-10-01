@@ -55,8 +55,13 @@ addopts = "-q"
 include = ["src", "tests", "scripts/compare_r_python.py"]
 typeCheckingMode = "standard"
 
+# uv installs the "dev" group on a plain `uv sync`, so `uv run pytest` works
+# without extra flags. The "dev" extra above is kept for pip users.
 [dependency-groups]
 dev = [
+    "pytest>=9",
+    "ruff>=0.16",
+    "pyright>=1.1",
     "jupyter>=1.1.1",
     "jupyter-cache>=1.0.1",
     "matplotlib>=3.11.1",

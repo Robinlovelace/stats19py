@@ -19,7 +19,7 @@ TABLES = ("collision", "casualty", "vehicle")
 
 @lru_cache(maxsize=1)
 def schema() -> pd.DataFrame:
-    """Load the golden schema: table/variable/code/label/note/type (1820 rows).
+    """Load the golden schema: table/variable/code/label/note/type (1821 rows).
 
     ``keep_default_na=False`` is critical: the R schema contains the literal
     string ``"None"`` as a label (6 variables, code 0) and pandas would

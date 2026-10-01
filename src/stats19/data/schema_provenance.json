@@ -1,0 +1,27 @@
+{
+  "generated": "2026-10-01T16:18:37.475942+00:00",
+  "source": {
+    "r_package": "ropensci/stats19",
+    "r_version": "4.2.0 (installed)",
+    "files": [
+      "stats19_schema",
+      "stats19_variables",
+      "file_names"
+    ]
+  },
+  "cross_validation": {
+    "dft_guide": "https://assets.publishing.service.gov.uk/media/6a63900b2dc18ebe4c3b2bc8/dft-road-casualty-statistics-road-safety-open-dataset-data-guide-2025.xlsx",
+    "overlap_keys": "~1776/1818 with DfT 2024_code_list",
+    "known_divergence": "DfT gives empty label for code 0 in 6 variables; R schema uses literal 'None'. R behaviour preserved for parity. Also DfT labels have trailing whitespace; R's are trimmed."
+  },
+  "n_rows": 1821,
+  "columns": [
+    "table",
+    "variable",
+    "code",
+    "label",
+    "note",
+    "type"
+  ],
+  "notes": "Golden schema for stats19py. Regenerate with: uv run python scripts/build_schema.py --write"
+}
