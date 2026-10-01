@@ -192,9 +192,10 @@ def dl_stats19(
                     print(note)
                 for f in res.files:
                     print(f"Data already exists in data_dir, not downloading: {f.name}")
-        if not needed:
+        if tables and not needed:
             return local_paths[-1] if local_paths else None
-        fnames = [f for f in fnames if f in needed] or list(dict.fromkeys(needed))
+        if tables:
+            fnames = [f for f in fnames if f in needed] or list(dict.fromkeys(needed))
     if not fnames:
         if not silent:
             print("No files found. Check the stats19 website on data.gov.uk")
