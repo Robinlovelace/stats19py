@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import importlib.resources as res
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -16,6 +17,8 @@ import pytest
 import stats19 as read
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+if not (DATA_DIR / "dft-road-casualty-statistics-collision-2024.csv").exists():
+    DATA_DIR = Path(os.environ.get("STATS19_DOWNLOAD_DIRECTORY", DATA_DIR))
 REF_DIR = Path(__file__).resolve().parents[1] / "scripts" / "reference"
 
 pytestmark = pytest.mark.skipif(

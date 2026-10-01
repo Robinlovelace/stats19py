@@ -20,7 +20,7 @@ import urllib.request
 
 import pandas as pd
 
-from stats19 import data
+from stats19 import data, local
 
 # ---------------------------------------------------------------------------
 # Constants (mirror R package behaviour)
@@ -76,6 +76,10 @@ def find_file_name(
     Port of R ``find_file_name()`` (v4.1.0-dev): requests including any year
     < 2021 resolve to the cumulative ``1979-latest`` files; ``"all"`` does the
     same; individual-year files are used only when all years are >= 2021.
+
+    ``5`` means the last-5-years files. R treats the number 5 as a year
+    before 2021 and returns the 1979 history instead, which is a bug that
+    this port does not copy.
     """
     all_files = data.file_names()
     if years is None:
@@ -85,7 +89,7 @@ def find_file_name(
     else:
         years_list = [years] if isinstance(years, int) else list(years)
         result = []
-        if any(isinstance(y, int) and y < 2021 for y in years_list):
+        if any(isinstance(y, int) and y != 5 and y < 2021 for y in years_list):
             result = [f for f in all_files if "1979-latest" in f]
         else:
             for y in years_list:
@@ -158,21 +162,49 @@ def dl_stats19(
     file_name: str | None = None,
     silent: bool = False,
     timeout: int = 600,
+    offline: bool | None = None,
 ) -> str | None:
     """Download STATS19 files for the requested years/type.
 
-    Skips files already present; returns the last saved path (or ``None``).
+    Nothing is downloaded if local files already answer the request, under
+    any DfT naming vintage (see :mod:`stats19.local`). With ``offline=True``
+    or ``STATS19_OFFLINE=1``, a request that would need a download raises
+    :class:`stats19.local.OfflineError` instead of touching the network.
+
+    Returns the last local or saved path (or ``None``).
     """
     data_dir = data_dir or get_data_directory()
-    fnames = (
-        [file_name]
-        if file_name
-        else find_file_name(years=year, type=None if type in (None, "all") else type)
-    )
+    if file_name:
+        fnames = [file_name]
+    else:
+        fnames = find_file_name(years=year, type=None if type in (None, "all") else type)
+        tables = [t for t in data.TABLES if type in (None, "all") or t in type.lower()]
+        if type and "acc" in type.lower():
+            tables = ["collision"]
+        local_paths: list[str] = []
+        needed: list[str] = []
+        for t in tables:
+            res = local.resolve(t, year, data_dir)
+            local_paths.extend(f.path for f in res.files)
+            needed.extend(res.missing)
+            if not silent:
+                for note in res.notes:
+                    print(note)
+                for f in res.files:
+                    print(f"Data already exists in data_dir, not downloading: {f.name}")
+        if not needed:
+            return local_paths[-1] if local_paths else None
+        fnames = [f for f in fnames if f in needed] or list(dict.fromkeys(needed))
     if not fnames:
         if not silent:
             print("No files found. Check the stats19 website on data.gov.uk")
         return None
+    pending = [f for f in fnames if not os.path.exists(os.path.join(data_dir, f))]
+    if pending and local.is_offline(offline):
+        raise local.OfflineError(
+            f"Offline: these files are not in {data_dir} and would need a download: "
+            + ", ".join(pending)
+        )
     if not silent:
         print("Files identified: " + ", ".join(fnames))
 
@@ -235,16 +267,40 @@ def read_stats19(
 ) -> pd.DataFrame | None:
     """Read STATS19 data, optionally formatted (R ``read_stats19``)."""
     data_dir = data_dir or get_data_directory()
-    fnames = [filename] if filename else find_file_name(years=year, type=type)
-    if not fnames:
-        print("No files found.")
-        return None
-    existing = [p for p in (os.path.join(data_dir, f) for f in fnames) if os.path.exists(p)]
+    year_filter: list[int] | None = None
+    if filename:
+        existing = [p for p in [os.path.join(data_dir, filename)] if os.path.exists(p)]
+    else:
+        table = "collision" if "acc" in type.lower() else type.lower()
+        res = local.resolve(table, year, data_dir)
+        if not res.files and not find_file_name(years=year, type=type):
+            print("No files found.")
+            return None
+        if not silent:
+            for note in res.notes:
+                print(note)
+        existing = [f.path for f in res.files]
+        year_filter = res.year_filter
     if not existing:
         print("Files not found on disk.")
         return None
 
-    frames = [_read_csv(p) for p in existing]
+    frames = []
+    for p in existing:
+        if year_filter is not None and not _is_single_year_file(p):
+            # Stream the multi-year file through DuckDB and parse only the
+            # requested years, rather than the full 1979 history.
+            with local.year_slice(p, year_filter) as sliced:
+                frames.append(_read_csv(sliced))
+        else:
+            frames.append(_read_csv(p))
+    if len({tuple(f.columns) for f in frames}) > 1:
+        # Mixed DfT vintages: align old accident_* names with collision_*.
+        renames = {old: new for new, olds in _UNIFY_COLS.items() for old in olds}
+        frames = [
+            f.rename(columns=lambda c: renames.get(c.lstrip("\ufeff"), c.lstrip("\ufeff")))
+            for f in frames
+        ]
     df = frames[0] if len(frames) == 1 else pd.concat(frames, ignore_index=True)
     df.columns = format_column_names(list(df.columns))
     df = _normalize_collision_reference(df)
@@ -271,6 +327,11 @@ def read_stats19(
             assert isinstance(filtered, pd.DataFrame)
             return filtered
     return df
+
+
+def _is_single_year_file(path: str) -> bool:
+    name = os.path.basename(path)
+    return re.search(r"-\d{4}\.csv$", name) is not None and "1979-" not in name
 
 
 def _normalize_collision_reference(x: pd.DataFrame) -> pd.DataFrame:
