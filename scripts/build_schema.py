@@ -6,7 +6,8 @@ the package. Sources, in priority order:
 
 1. **ropensci/stats19 R package data** (authoritative for behaviour parity):
    `stats19_schema`, `stats19_variables` and `file_names` from the installed
-   package (4.2.0 at the time of writing), or from the dev checkout with --dev. This is the source of truth because the whole point
+   package (4.2.0 at the time of writing), or from the dev checkout with --dev.
+   This is the source of truth because the whole point
    of the Python port is byte-for-byte parity with R; the schema carries R's
    quirks (e.g. literal "None" labels for code 0 in 6 variables) that must be
    preserved.
